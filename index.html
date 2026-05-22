@@ -24,16 +24,16 @@
   --nav:60px;--safe-b:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased}
+html,body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased}
 
 /* ─ SHELL ─ */
-.app{display:flex;flex-direction:column;height:100%;height:100dvh}
-.app-bar{background:#fff;border-bottom:1px solid var(--border);padding:10px 16px 8px;padding-top:max(10px,env(safe-area-inset-top));flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.app-bar{position:sticky;top:0;z-index:200;background:#fff;border-bottom:1px solid var(--border);padding:10px 16px 8px;padding-top:max(10px,env(safe-area-inset-top));flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .app-title{font-size:17px;font-weight:700;color:var(--t1)}
 .app-sub{font-size:11px;color:var(--t3);margin-top:1px}
 .today-btn{background:var(--m);color:#fff;border:none;border-radius:999px;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--nav) + var(--safe-b) + 8px)}
+.content{flex:1;padding-bottom:calc(var(--nav) + var(--safe-b) + 24px)}
 
 /* ─ BOTTOM NAV ─ */
 .bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:var(--safe-b);z-index:100}
@@ -60,7 +60,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .alert strong{font-weight:700}
 
 /* ─ DAY JUMP NAV ─ */
-.day-nav{display:flex;gap:7px;padding:10px 14px;overflow-x:auto;scrollbar-width:none;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.day-nav{display:flex;gap:7px;padding:10px 14px;overflow-x:auto;scrollbar-width:none;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:60px;z-index:20}
 .day-nav::-webkit-scrollbar{display:none}
 .dn-btn{flex-shrink:0;padding:6px 14px;border-radius:999px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;color:var(--t3);cursor:pointer;white-space:nowrap;transition:all .15s}
 .dn-btn.on-m{border-color:var(--m);background:var(--m-l);color:var(--m)}
@@ -108,7 +108,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .day-hdr-title{font-size:14px;font-weight:700;color:var(--t1)}
 .day-hdr-date{font-size:11px;color:var(--t3)}
 .timeline{padding:8px 14px 0}
-.tl-item{display:grid;grid-template-columns:44px 14px 1fr;gap:0;margin-bottom:8px}
+.tl-item{display:grid;grid-template-columns:58px 1fr;gap:0;margin-bottom:8px}
 .tl-left{display:flex;flex-direction:column;align-items:center;padding-top:14px}
 .tl-time{font-size:10.5px;font-weight:600;color:var(--t3);line-height:1.2;text-align:center;margin-bottom:4px}
 .tl-dot{width:9px;height:9px;border-radius:50%;border:2px solid;flex-shrink:0}
@@ -466,7 +466,7 @@ function showPage(id, btn, cls) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(b => { b.classList.remove('on'); });
   document.getElementById('pg-'+id).classList.add('on');
-  document.getElementById('C').scrollTop = 0;
+  window.scrollTo(0,0);
   if (btn) {
     btn.classList.add('on');
     if (cls) btn.classList.add(cls);
@@ -480,9 +480,8 @@ function jumpDay(dayId, navId, btn) {
   btn.classList.add(activeCls);
   const el = document.getElementById(dayId);
   if (!el) return;
-  const C = document.getElementById('C');
-  const offset = el.offsetTop - 110;
-  C.scrollTo({ top: offset, behavior: 'smooth' });
+  const offset = el.getBoundingClientRect().top + window.scrollY - 120;
+  window.scrollTo({ top: offset, behavior: 'smooth' });
 }
 
 // ── CARD TOGGLE (tap to expand) ──
@@ -542,7 +541,7 @@ function goToToday() {
   showPage(entry.page, nb, entry.page==='seville'?'s':entry.page==='barcelona'?'b':entry.page==='food'?'f':'');
   setTimeout(() => {
     const el = document.getElementById(entry.day);
-    if (el) document.getElementById('C').scrollTo({ top: el.offsetTop - 110, behavior: 'smooth' });
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
     const dayNavId = 'dn-'+(entry.page==='madrid'?'madrid':entry.page==='seville'?'seville':'bcn');
     const dayNav = document.getElementById(dayNavId);
     if (dayNav) {
@@ -578,8 +577,8 @@ function buildTodayBanner() {
 buildTodayBanner();
 
 // ── SCROLL → UPDATE DAY NAV ──
-document.getElementById('C').addEventListener('scroll', function() {
-  const scrollTop = this.scrollTop + 160;
+window.addEventListener('scroll', function() {
+  const scrollTop = window.scrollY + 180;
   const activePage = document.querySelector('.page.on')?.id?.replace('pg-','');
   if (!activePage || activePage === 'overview' || activePage === 'food') return;
   const navId = activePage==='madrid'?'dn-madrid':activePage==='seville'?'dn-seville':'dn-bcn';
